@@ -16,6 +16,7 @@ class CodeHarnessConfig(BaseModel):
     base_url: str = Field(default="https://api.openai.com/v1")
     max_steps: int = Field(default=8, ge=1)
     command_timeout: int = Field(default=30, ge=1)
+    llm_timeout: float = Field(default=60, gt=0)
 
     @property
     def api_key_configured(self) -> bool:
@@ -40,6 +41,8 @@ class CodeHarnessConfig(BaseModel):
             data["max_steps"] = max_steps
         if timeout := _optional_value(source, "CODEHARNESS_COMMAND_TIMEOUT"):
             data["command_timeout"] = timeout
+        if llm_timeout := _optional_value(source, "CODEHARNESS_LLM_TIMEOUT"):
+            data["llm_timeout"] = llm_timeout
 
         return cls(**data)
 

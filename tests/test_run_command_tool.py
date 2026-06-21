@@ -7,7 +7,7 @@ from codeharness.workspace import Workspace
 
 
 def _registry(tmp_path):
-    return create_default_registry(Workspace(tmp_path))
+    return create_default_registry(Workspace(tmp_path), allow_command=True)
 
 
 def test_run_command_executes_python_and_captures_stdout(tmp_path) -> None:
@@ -141,7 +141,7 @@ def test_run_command_timeout_returns_structured_result(tmp_path) -> None:
 
 
 def test_default_registry_passes_command_timeout_to_run_command(tmp_path) -> None:
-    registry = create_default_registry(Workspace(tmp_path), command_timeout=1)
+    registry = create_default_registry(Workspace(tmp_path), command_timeout=1, allow_command=True)
 
     result = registry.execute(
         "run_command",

@@ -7,7 +7,7 @@ from codeharness.workspace import Workspace
 
 
 def _registry(tmp_path):
-    return create_default_registry(Workspace(tmp_path))
+    return create_default_registry(Workspace(tmp_path), allow_all=True)
 
 
 def test_agent_loop_executes_tools_and_finishes(tmp_path) -> None:

@@ -9,7 +9,7 @@ from codeharness.workspace import Workspace
 
 def _provider(tmp_path, responses):
     client = FakeLLMClient(responses)
-    registry = create_default_registry(Workspace(tmp_path), command_timeout=1)
+    registry = create_default_registry(Workspace(tmp_path), command_timeout=5, allow_all=True)
     provider = LLMActionProvider(client, PromptBuilder(), registry)
     return client, registry, provider
 

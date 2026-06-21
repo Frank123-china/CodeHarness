@@ -9,6 +9,7 @@ def test_config_defaults_load() -> None:
     assert config.base_url == "https://api.openai.com/v1"
     assert config.max_steps == 8
     assert config.command_timeout == 30
+    assert config.llm_timeout == 60
     assert config.api_key_configured is False
 
 
@@ -20,6 +21,7 @@ def test_config_reads_environment_values() -> None:
             "CODEHARNESS_BASE_URL": "http://localhost:8000/v1",
             "CODEHARNESS_MAX_STEPS": "3",
             "CODEHARNESS_COMMAND_TIMEOUT": "12",
+            "CODEHARNESS_LLM_TIMEOUT": "9.5",
         }
     )
 
@@ -28,4 +30,5 @@ def test_config_reads_environment_values() -> None:
     assert config.base_url == "http://localhost:8000/v1"
     assert config.max_steps == 3
     assert config.command_timeout == 12
+    assert config.llm_timeout == 9.5
     assert config.api_key_configured is True

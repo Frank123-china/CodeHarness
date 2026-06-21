@@ -1,10 +1,10 @@
 # CodeHarness
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 CodeHarness is a lightweight Python CLI scaffold for a future programming agent inspired by Claude Code and Codex CLI.
 
-The project is still in the framework stage. It can be installed, started, and tested. It currently includes a workspace-limited tool runtime, a deterministic AgentLoop, a basic non-shell command tool, and a minimal LLM action protocol driven by a fake client for tests.
-
-CodeHarness does not call a real model yet.
+The project currently includes a workspace-limited tool runtime, a deterministic AgentLoop, a basic non-shell command tool, a fake LLM path for tests, and a minimal OpenAI-compatible client for real model calls.
 
 ## Environment
 
@@ -38,34 +38,6 @@ Install the project and development dependencies:
 python -m pip install -e ".[dev]"
 ```
 
-## CLI Usage
-
-Show help:
-
-```powershell
-code-harness --help
-```
-
-Check the local runtime:
-
-```powershell
-code-harness doctor
-```
-
-Pass a task to the placeholder runtime:
-
-```powershell
-code-harness run "创建并运行 hello.py"
-```
-
-List the registered development tools:
-
-```powershell
-code-harness tools
-```
-
-The original `CodeHarness` console command is also kept as a compatibility alias.
-
 ## Configuration
 
 Configuration is read from environment variables:
@@ -76,11 +48,52 @@ $env:CODEHARNESS_API_KEY = "your-api-key"
 $env:CODEHARNESS_BASE_URL = "https://api.openai.com/v1"
 $env:CODEHARNESS_MAX_STEPS = "8"
 $env:CODEHARNESS_COMMAND_TIMEOUT = "30"
+$env:CODEHARNESS_LLM_TIMEOUT = "60"
 ```
 
-The API key is optional at this stage because CodeHarness does not call a real model yet.
+`CODEHARNESS_BASE_URL` can point to any OpenAI-compatible chat completions endpoint. The API key is only displayed as configured/not configured; CodeHarness does not print the key.
 
-`CODEHARNESS_COMMAND_TIMEOUT` is passed into the default `RunCommandTool` registration when a registry is created with configuration.
+## CLI Usage
+
+Show help:
+
+```powershell
+code-harness --help
+```
+
+Check local configuration:
+
+```powershell
+code-harness doctor
+```
+
+Run the model-backed AgentLoop in default read-only mode:
+
+```powershell
+code-harness run "分析当前仓库结构"
+```
+
+Allow file writes:
+
+```powershell
+code-harness run "创建 hello.py" --allow-write
+```
+
+Allow file writes and command execution:
+
+```powershell
+code-harness run "创建 hello.py 并执行验证" --allow-write --allow-command
+```
+
+List currently allowed tools:
+
+```powershell
+code-harness tools
+code-harness tools --allow-write
+code-harness tools --allow-write --allow-command
+```
+
+The original `CodeHarness` console command is also kept as a compatibility alias.
 
 ## Tool Runtime
 
@@ -98,13 +111,23 @@ Built-in tools:
 - `write_file`: creates or overwrites UTF-8 text files inside the workspace.
 - `run_command`: runs a non-shell subprocess command inside the workspace and captures `stdout`, `stderr`, `exit_code`, timeout state, duration, and truncation state.
 
-Each tool exports a schema:
+Each tool exports a schema through `registry.schemas()`. The `parameters` schema comes from the tool's Pydantic argument model via `model_json_schema()`, and schema output is sorted by tool name.
 
-```python
-registry.schemas()
-```
+## Tool Permissions
 
-The schema includes `name`, `description`, and `parameters`. The `parameters` value comes directly from the tool's Pydantic argument model via `model_json_schema()`, and registry schema output is sorted by tool name.
+The model does not receive every tool by default.
+
+Default allowed tools:
+
+- `list_files`
+- `read_file`
+
+Additional flags:
+
+- `--allow-write` exposes and enables `write_file`.
+- `--allow-command` exposes and enables `run_command`.
+
+Permissions are enforced twice: prompt/schema generation only includes currently allowed tools, and `ToolRegistry.execute()` rejects registered-but-disallowed tools with a structured `ToolResult`.
 
 ## Command Safety
 
@@ -120,29 +143,13 @@ The schema includes `name`, `description`, and `parameters`. The `parameters` va
 
 This is not an operating-system-level sandbox. Commands still run with the current user's system permissions. Do not run arbitrary commands in an untrusted workspace.
 
-## AgentLoop
+CodeHarness currently has no per-tool interactive approval, no Docker sandbox, and no session resume.
 
-CodeHarness includes a deterministic AgentLoop control layer:
+## LLM Runtime
 
-- `AgentAction`: a Pydantic action model supporting `tool` and `finish`.
-- `AgentStep`: one visible action and optional tool observation.
-- `AgentRunResult`: the structured result for a run.
-- `AgentContext`: the minimal context passed to an action provider.
-- `ActionProvider`: a protocol for supplying actions.
-- `ScriptedActionProvider`: a test/demo provider that returns predefined actions in order.
+`OpenAICompatibleClient` uses the official `openai` Python SDK and calls the synchronous Chat Completions API with one user message containing the prompt. It sets SDK retries to zero and maps SDK/network/auth/server failures into `LLMClientError` without including the API key in error messages.
 
-The AgentLoop only calls tools through `ToolRegistry`. It records tool failures as observations, stops on `finish`, returns `max_steps_exceeded` when the loop limit is reached, and returns `failed` when the provider raises an error or the task is empty.
-
-## LLM Action Protocol
-
-The current LLM layer is intentionally fake and deterministic:
-
-- `LLMClient`: a synchronous protocol with `complete(prompt: str) -> str`.
-- `FakeLLMClient`: returns predefined text responses and records every prompt it receives.
-- `PromptBuilder`: builds prompts containing the task, tool schemas, previous visible steps, tool calls, and `ToolResult` observations.
-- `LLMActionProvider`: calls an `LLMClient`, strips an optional outer JSON Markdown fence, parses JSON, validates it as `AgentAction`, and returns the action to `AgentLoop`.
-
-Models must return one JSON object:
+The model response is parsed by `LLMActionProvider` as one JSON object:
 
 ```json
 {"type":"tool","tool_name":"read_file","arguments":{"path":"README.md"}}
@@ -154,7 +161,7 @@ or:
 {"type":"finish","summary":"Task completed and verified."}
 ```
 
-Invalid JSON or invalid fields are surfaced as provider errors; `AgentLoop` converts those to a structured `failed` run with `stop_reason="provider_error"`. Unknown tool names are not rewritten by the provider. They flow to `ToolRegistry`, which returns a structured tool failure observation.
+Invalid JSON or invalid fields become provider errors. Unknown tool names are not rewritten by the provider; they flow to `ToolRegistry`, which returns a structured tool failure observation.
 
 ## Testing
 
@@ -164,6 +171,8 @@ Run the test suite:
 python -m pytest
 ```
 
+Automated tests use `FakeLLMClient` or injected SDK mocks and do not require network access or a real API key.
+
 ## Not Implemented Yet
 
-CodeHarness does not yet include real model calls, an OpenAI client, HTTP requests, prompt templates for real models, streaming output, async execution, automatic retries, CLI `run` integration with a real AgentLoop, shell command execution through shell wrappers, patch application, tool-calling protocol integration, Git automation, session persistence, checkpoints, user approval flows, Docker sandboxing, multi-agent behavior, long-term memory, MCP integration, databases, vector databases, a web UI, complex logging, or a complex permission system.
+CodeHarness does not yet include streaming output, async execution, automatic retries, JSON auto-repair, session persistence, resume, patch application, Git checkpoints, file backups, per-tool interactive approval, Docker sandboxing, network isolation, context compression, multi-agent behavior, long-term memory, MCP integration, databases, vector databases, a web UI, or complex logging.

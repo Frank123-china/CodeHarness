@@ -14,7 +14,7 @@ def test_tool_schema_comes_from_pydantic_model(tmp_path) -> None:
 
 
 def test_tool_schema_order_is_stable(tmp_path) -> None:
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     names = [schema["name"] for schema in registry.schemas()]
 
@@ -22,7 +22,7 @@ def test_tool_schema_order_is_stable(tmp_path) -> None:
 
 
 def test_tool_schemas_are_json_serializable(tmp_path) -> None:
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     encoded = json.dumps(registry.schemas(), ensure_ascii=False)
 

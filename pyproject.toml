@@ -9,6 +9,7 @@ description = "A lightweight CLI programming agent scaffold."
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "openai>=1.0,<3.0",
     "typer>=0.12,<1.0",
     "pydantic>=2.0,<3.0",
 ]

@@ -7,7 +7,7 @@ def test_list_files_lists_workspace_entries(tmp_path) -> None:
     (tmp_path / "a.txt").write_text("a", encoding="utf-8")
     (tmp_path / "sub").mkdir()
     (tmp_path / "sub" / "b.txt").write_text("b", encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("list_files", {"path": ".", "max_depth": 1})
 
@@ -20,7 +20,7 @@ def test_list_files_lists_workspace_entries(tmp_path) -> None:
 def test_list_files_respects_max_depth(tmp_path) -> None:
     (tmp_path / "one" / "two").mkdir(parents=True)
     (tmp_path / "one" / "two" / "deep.txt").write_text("deep", encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("list_files", {"path": ".", "max_depth": 0})
 
@@ -36,7 +36,7 @@ def test_list_files_ignores_common_directories(tmp_path) -> None:
     (tmp_path / "__pycache__").mkdir()
     (tmp_path / "__pycache__" / "x.pyc").write_text("hidden", encoding="utf-8")
     (tmp_path / "visible.txt").write_text("visible", encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("list_files", {"path": ".", "max_depth": 2})
 
@@ -49,7 +49,7 @@ def test_list_files_ignores_common_directories(tmp_path) -> None:
 def test_list_files_rejects_outside_workspace(tmp_path) -> None:
     outside = tmp_path.parent / "outside-list"
     outside.mkdir(exist_ok=True)
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("list_files", {"path": str(outside), "max_depth": 1})
 
@@ -59,7 +59,7 @@ def test_list_files_rejects_outside_workspace(tmp_path) -> None:
 
 def test_read_file_reads_utf8_file(tmp_path) -> None:
     (tmp_path / "hello.txt").write_text("hello", encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("read_file", {"path": "hello.txt"})
 
@@ -69,7 +69,7 @@ def test_read_file_reads_utf8_file(tmp_path) -> None:
 
 
 def test_read_file_missing_file_returns_error(tmp_path) -> None:
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("read_file", {"path": "missing.txt"})
 
@@ -79,7 +79,7 @@ def test_read_file_missing_file_returns_error(tmp_path) -> None:
 
 def test_read_file_directory_returns_error(tmp_path) -> None:
     (tmp_path / "folder").mkdir()
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("read_file", {"path": "folder"})
 
@@ -89,7 +89,7 @@ def test_read_file_directory_returns_error(tmp_path) -> None:
 
 def test_read_file_large_file_returns_error(tmp_path) -> None:
     (tmp_path / "large.txt").write_text("x" * (MAX_TEXT_FILE_BYTES + 1), encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("read_file", {"path": "large.txt"})
 
@@ -100,7 +100,7 @@ def test_read_file_large_file_returns_error(tmp_path) -> None:
 def test_read_file_rejects_outside_workspace(tmp_path) -> None:
     outside = tmp_path.parent / "outside-read.txt"
     outside.write_text("outside", encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("read_file", {"path": str(outside)})
 
@@ -109,7 +109,7 @@ def test_read_file_rejects_outside_workspace(tmp_path) -> None:
 
 
 def test_write_file_creates_file(tmp_path) -> None:
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("write_file", {"path": "created.txt", "content": "hello"})
 
@@ -120,7 +120,7 @@ def test_write_file_creates_file(tmp_path) -> None:
 
 def test_write_file_overwrites_file(tmp_path) -> None:
     (tmp_path / "created.txt").write_text("old", encoding="utf-8")
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("write_file", {"path": "created.txt", "content": "new"})
 
@@ -129,7 +129,7 @@ def test_write_file_overwrites_file(tmp_path) -> None:
 
 
 def test_write_file_creates_parent_directories(tmp_path) -> None:
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("write_file", {"path": "nested/new.txt", "content": "content"})
 
@@ -140,7 +140,7 @@ def test_write_file_creates_parent_directories(tmp_path) -> None:
 
 def test_write_file_rejects_outside_workspace(tmp_path) -> None:
     outside = tmp_path.parent / "outside-write.txt"
-    registry = create_default_registry(Workspace(tmp_path))
+    registry = create_default_registry(Workspace(tmp_path), allow_all=True)
 
     result = registry.execute("write_file", {"path": str(outside), "content": "outside"})
 
