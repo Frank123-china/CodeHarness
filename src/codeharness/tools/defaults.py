@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from codeharness.tools.command import RunCommandTool
 from codeharness.tools.files import ListFilesTool, ReadFileTool, WriteFileTool
 from codeharness.tools.registry import ToolRegistry
 from codeharness.workspace import Workspace
@@ -16,5 +17,6 @@ def create_default_registry(workspace: Workspace | str | Path | None = None) -> 
     registry = ToolRegistry(active_workspace)
     registry.register(ListFilesTool())
     registry.register(ReadFileTool())
+    registry.register(RunCommandTool())
     registry.register(WriteFileTool())
     return registry

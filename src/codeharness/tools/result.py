@@ -22,7 +22,12 @@ class ToolResult(BaseModel):
         return cls(success=True, output=output, metadata=metadata or {})
 
     @classmethod
-    def fail(cls, error: str, metadata: dict[str, Any] | None = None) -> "ToolResult":
+    def fail(
+        cls,
+        error: str,
+        output: Any | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> "ToolResult":
         """Build a failed tool result without raising to the caller."""
 
-        return cls(success=False, error=error, metadata=metadata or {})
+        return cls(success=False, output=output, error=error, metadata=metadata or {})

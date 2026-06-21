@@ -1,4 +1,5 @@
 import pytest
+import sys
 
 from codeharness.agent import AgentAction, AgentContext, AgentLoop, ScriptedActionProvider
 from codeharness.tools import ToolResult, create_default_registry
@@ -33,6 +34,35 @@ def test_agent_loop_executes_tools_and_finishes(tmp_path) -> None:
     assert result.steps[1].tool_result.output == "hello"
     assert result.steps[2].tool_result is None
     assert (tmp_path / "hello.txt").read_text(encoding="utf-8") == "hello"
+
+
+def test_agent_loop_runs_written_python_file(tmp_path) -> None:
+    provider = ScriptedActionProvider(
+        [
+            AgentAction(
+                type="tool",
+                tool_name="write_file",
+                arguments={"path": "hello.py", "content": "print('Hello, CodeHarness')\n"},
+            ),
+            AgentAction(
+                type="tool",
+                tool_name="run_command",
+                arguments={"command": [sys.executable, "hello.py"], "cwd": "."},
+            ),
+            AgentAction(type="finish", summary="Python file executed."),
+        ]
+    )
+    loop = AgentLoop(_registry(tmp_path), provider, max_steps=5)
+
+    result = loop.run("create and run hello.py")
+
+    assert result.status == "completed"
+    assert (tmp_path / "hello.py").read_text(encoding="utf-8") == "print('Hello, CodeHarness')\n"
+    command_result = result.steps[1].tool_result
+    assert command_result.success is True
+    assert command_result.output["exit_code"] == 0
+    assert command_result.output["stdout"] == "Hello, CodeHarness\n"
+    assert result.summary == "Python file executed."
 
 
 def test_scripted_action_provider_returns_actions_in_order() -> None:

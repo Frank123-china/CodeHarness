@@ -2,7 +2,7 @@
 
 CodeHarness is a lightweight Python CLI scaffold for a future programming agent inspired by Claude Code and Codex CLI.
 
-The project is still in the framework stage. It can be installed, started, and tested. It currently includes a minimal workspace-limited tool runtime and a deterministic AgentLoop driven by scripted actions. It does not call a real model and does not execute shell commands.
+The project is still in the framework stage. It can be installed, started, and tested. It currently includes a workspace-limited tool runtime, a deterministic AgentLoop driven by scripted actions, and a basic non-shell command execution tool. It does not call a real model.
 
 ## Environment
 
@@ -53,7 +53,7 @@ code-harness doctor
 Pass a task to the placeholder runtime:
 
 ```powershell
-code-harness run "创建一个 hello.py"
+code-harness run "创建并运行 hello.py"
 ```
 
 List the registered development tools:
@@ -92,8 +92,35 @@ Built-in tools:
 - `list_files`: lists workspace files and directories, with depth limits and ignored common directories.
 - `read_file`: reads UTF-8 text files inside the workspace with a size limit.
 - `write_file`: creates or overwrites UTF-8 text files inside the workspace.
+- `run_command`: runs a non-shell subprocess command inside the workspace and captures `stdout`, `stderr`, `exit_code`, timeout state, duration, and truncation state.
 
-The file tools are currently intended for internal/runtime use and tests. The CLI only exposes a simple `tools` listing command.
+Example runtime call:
+
+```python
+registry.execute(
+    "run_command",
+    {
+        "command": ["python", "-c", "print('hello')"],
+        "cwd": ".",
+    },
+)
+```
+
+The CLI only exposes a simple `tools` listing command. Tool execution is intended for internal/runtime use and tests at this stage.
+
+## Command Safety
+
+`run_command` always calls `subprocess.run(..., shell=False)` with a command argument list. Its `cwd` is resolved through `Workspace`, so path traversal and directories outside the workspace are rejected.
+
+`CommandPolicy` provides basic protection by rejecting:
+
+- empty commands or empty command arguments;
+- `shell=True`;
+- obvious dangerous commands such as `rm`, `rmdir`, `shutdown`, `format`, and similar system commands;
+- shell wrappers such as `cmd`, `powershell`, `pwsh`, `bash`, and `sh`;
+- common shell syntax tokens such as `&&`, `|`, `;`, and redirects.
+
+This is not an operating-system-level sandbox. Commands still run with the current user's system permissions. Do not run arbitrary commands in an untrusted workspace.
 
 ## AgentLoop
 
@@ -118,4 +145,4 @@ python -m pytest
 
 ## Not Implemented Yet
 
-CodeHarness does not yet include real model calls, an OpenAI client, prompt templates, shell command execution, a `run_command` tool, patch application, tool-calling protocol integration, Git automation, session persistence, checkpoints, automatic planning, retry strategies, multi-agent behavior, long-term memory, MCP integration, databases, vector databases, a web UI, complex logging, or a complex permission system.
+CodeHarness does not yet include real model calls, an OpenAI client, prompt templates, an LLM action provider, shell command execution through shell wrappers, patch application, tool-calling protocol integration, Git automation, session persistence, checkpoints, automatic planning, retry strategies, user approval flows, Docker sandboxing, multi-agent behavior, long-term memory, MCP integration, databases, vector databases, a web UI, complex logging, or a complex permission system.

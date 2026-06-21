@@ -44,7 +44,7 @@ def run(task: str = typer.Argument(..., help="Task description to pass to CodeHa
     typer.echo(f"Received task: {task}")
     typer.echo(f"Current working directory: {Path.cwd()}")
     typer.echo(f"Model: {config.model_name}")
-    typer.echo("Agent Runtime 尚未实现")
+    typer.echo("LLM 驱动的 Agent Runtime 尚未接入")
 
 
 @app.command("tools")

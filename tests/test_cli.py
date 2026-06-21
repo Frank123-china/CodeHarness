@@ -28,7 +28,7 @@ def test_run_accepts_task() -> None:
 
     assert result.exit_code == 0
     assert task in result.output
-    assert "Agent Runtime 尚未实现" in result.output
+    assert "LLM 驱动的 Agent Runtime 尚未接入" in result.output
 
 
 def test_tools_command_runs() -> None:
@@ -37,4 +37,5 @@ def test_tools_command_runs() -> None:
     assert result.exit_code == 0
     assert "list_files" in result.output
     assert "read_file" in result.output
+    assert "run_command" in result.output
     assert "write_file" in result.output
