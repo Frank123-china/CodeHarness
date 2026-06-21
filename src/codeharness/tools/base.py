@@ -20,6 +20,15 @@ class BaseTool:
 
         return self.args_model.model_validate(args)
 
+    def schema(self) -> dict[str, object]:
+        """Export a JSON-serializable schema for this tool."""
+
+        return {
+            "name": self.name,
+            "description": self.description,
+            "parameters": self.args_model.model_json_schema(),
+        }
+
     def execute(self, args: BaseModel, workspace: Workspace) -> ToolResult:
         """Execute the tool against a workspace."""
 

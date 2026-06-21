@@ -2,7 +2,8 @@
 
 from codeharness.agent.loop import AgentLoop
 from codeharness.agent.models import AgentAction, AgentContext, AgentRunResult, AgentStep
-from codeharness.agent.provider import ActionProvider, ScriptedActionProvider
+from codeharness.agent.prompt import PromptBuilder
+from codeharness.agent.provider import ActionProvider, LLMActionProvider, LLMActionProviderError, ScriptedActionProvider
 
 __all__ = [
     "ActionProvider",
@@ -11,5 +12,8 @@ __all__ = [
     "AgentLoop",
     "AgentRunResult",
     "AgentStep",
+    "LLMActionProvider",
+    "LLMActionProviderError",
+    "PromptBuilder",
     "ScriptedActionProvider",
 ]

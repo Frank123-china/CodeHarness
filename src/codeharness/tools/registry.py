@@ -41,6 +41,11 @@ class ToolRegistry:
 
         return sorted(self._tools)
 
+    def schemas(self) -> list[dict[str, object]]:
+        """Return JSON-serializable schemas for all registered tools."""
+
+        return [self._tools[name].schema() for name in self.names()]
+
     def execute(self, name: str, args: Mapping[str, Any] | None = None) -> ToolResult:
         """Validate parameters and execute a registered tool."""
 

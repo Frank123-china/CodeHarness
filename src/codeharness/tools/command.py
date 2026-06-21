@@ -39,12 +39,17 @@ class RunCommandTool(BaseTool):
     description: ClassVar[str] = "Run a non-shell command inside the workspace."
     args_model: ClassVar[type[BaseModel]] = RunCommandArgs
 
-    def __init__(self, policy: CommandPolicy | None = None) -> None:
+    def __init__(
+        self,
+        policy: CommandPolicy | None = None,
+        default_timeout_seconds: int = DEFAULT_COMMAND_TIMEOUT_SECONDS,
+    ) -> None:
         self.policy = policy or CommandPolicy()
+        self.default_timeout_seconds = default_timeout_seconds
 
     def execute(self, args: BaseModel, workspace: Workspace) -> ToolResult:
         params = _cast_args(args, RunCommandArgs)
-        timeout = params.timeout_seconds or DEFAULT_COMMAND_TIMEOUT_SECONDS
+        timeout = params.timeout_seconds or self.default_timeout_seconds
         policy_decision = self.policy.check(params.command, use_shell=False)
         if not policy_decision.allowed:
             output = _result_payload(

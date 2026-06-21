@@ -140,6 +140,22 @@ def test_run_command_timeout_returns_structured_result(tmp_path) -> None:
     assert "timed out" in result.error
 
 
+def test_default_registry_passes_command_timeout_to_run_command(tmp_path) -> None:
+    registry = create_default_registry(Workspace(tmp_path), command_timeout=1)
+
+    result = registry.execute(
+        "run_command",
+        {
+            "command": [sys.executable, "-c", "import time; time.sleep(2)"],
+            "cwd": ".",
+        },
+    )
+
+    assert result.success is False
+    assert result.output["timed_out"] is True
+    assert "after 1 seconds" in result.error
+
+
 def test_run_command_empty_command_is_rejected_by_validation(tmp_path) -> None:
     result = _registry(tmp_path).execute("run_command", {"command": [], "cwd": "."})
 

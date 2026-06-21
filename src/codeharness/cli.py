@@ -51,7 +51,8 @@ def run(task: str = typer.Argument(..., help="Task description to pass to CodeHa
 def list_tools() -> None:
     """List currently registered development tools."""
 
-    registry = create_default_registry(Path.cwd())
+    config = _load_config_or_exit()
+    registry = create_default_registry(Path.cwd(), command_timeout=config.command_timeout)
     for tool in registry.list_tools():
         typer.echo(f"{tool.name}: {tool.description}")
 
